@@ -8,7 +8,6 @@ Bienvenido a mi repositorio de writeups de máquinas de CTF. Aquí encontrarás 
 
 ### Dockerlabs
 - [Máquina Pyred](Dockerlabs/pyred.md)
-- [Máquina Domain](Dockelabs/domain.md)
-- [Máquina Apiroot](Dockerlabs/apiroot.md)
+
 
 
