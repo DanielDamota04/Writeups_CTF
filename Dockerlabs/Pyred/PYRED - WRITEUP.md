@@ -23,7 +23,7 @@
 
 ## 1. Reconocimiento y Enumeración
 
-Comprobamos si la máquina está activa mediante el envío de un paquete ICMP y por el TTL que es igual a 64 reconocemos que es una máquina Linux.
+Comprobamos si la máquina está activa mediante el envío de un paquete ICMP y por el TTL que es igual a 64, reconocemos que es una máquina Linux.
 
 ```
 ping -c 1 <IP>
