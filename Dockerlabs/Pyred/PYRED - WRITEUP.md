@@ -28,7 +28,7 @@ Comprobamos si la máquina está activa mediante el envío de un paquete ICMP.
 ping -c 1 <IP>
 ```
 
-![[1.png]]
+![[Dockerlabs/Pyred/Imagenes/1.png]]
 
 Realizamos un primer escaneo con nmap para conocer los puertos abiertos de la máquina y volcamos el resultado en un archivo en formato "grepeable" para realizar un tratamiento mediante expresiones regulares (regex):
 
