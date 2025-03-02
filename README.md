@@ -11,4 +11,4 @@ Bienvenido a mi repositorio de writeups de máquinas de CTF. Aquí encontrarás 
 - [Máquina Domain](writeups/hackthebox/domain.md)
 - [Máquina Apiroot](writeups/hackthebox/apiroot.md)
 
-¡Happy Hacking! 🚀
+
