@@ -1,2 +1,14 @@
-# Writeups_CTF
-Writeups de las máquinas realizadas en plataformas estilo Capture The Flag
+# 🚀 CTF Writeups (AUN EN DESARROLLO)
+
+Bienvenido a mi repositorio de writeups de máquinas de CTF. Aquí encontrarás soluciones detalladas para diversas plataformas, con el objetivo de documentar metodologías, herramientas y técnicas utilizadas en cada reto.
+
+<br>
+
+## ÍNDICE
+
+### Dockerlabs
+- [Máquina Pyred](writeups/dockerlabs/pyred.md)
+- [Máquina Domain](writeups/hackthebox/domain.md)
+- [Máquina Apiroot](writeups/hackthebox/apiroot.md)
+
+¡Happy Hacking! 🚀
