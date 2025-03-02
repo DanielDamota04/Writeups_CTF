@@ -1,8 +1,9 @@
 
 # Writeup - PYRED
 
-![image](https://github.com/user-attachments/assets/9fcee883-8c49-403c-9ce2-fffd2ec3b0c6)
-
+<p align="center">
+  <img src="https://github.com/user-attachments/assets/92b13dd5-01d7-4f83-8bb6-e218dfb11235" alt="pyred"/>
+</p>
 
 ## Información General
 
