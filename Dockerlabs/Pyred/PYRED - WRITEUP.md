@@ -2,7 +2,7 @@
 # Writeup - PYRED
 
 <p align="center">
-  <img src="https://github.com/user-attachments/assets/92b13dd5-01d7-4f83-8bb6-e218dfb11235" alt="pyred"/>
+  <img src="https://github.com/DanielDamota04/Writeups_CTF/blob/main/Dockerlabs/Pyred/Imagenes/0.png" alt="pyred"/>
 </p>
 
 ## Información General
