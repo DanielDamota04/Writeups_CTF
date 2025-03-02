@@ -11,7 +11,7 @@
 - **Nivel de Dificultad**: Medio
 - **Sistema Operativo Detectado**: Linux
 - **Fecha de Ejecución**: 02/03/2025
-- **Metodología**: Enumeración → Explotación → Post-Explotación → Escalada de Privilegios
+- **Metodología**: Enumeración → Explotación → Escalada de Privilegios
 
 ## Técnicas utilizadas
 
