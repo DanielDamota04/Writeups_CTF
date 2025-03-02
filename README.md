@@ -7,7 +7,7 @@ Bienvenido a mi repositorio de writeups de máquinas de CTF. Aquí encontrarás 
 ## ÍNDICE
 
 ### Dockerlabs
-- [Máquina Pyred](Dockerlabs/pyred.md)
+- [Máquina Pyred](Dockerlabs/Pyred/PYRED-WRITEUP.md)
 
 
 
