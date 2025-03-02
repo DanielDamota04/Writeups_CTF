@@ -1,5 +1,5 @@
 
-# Pyred Writeup by Daniel Damota
+# Writeup de la máquina PyRed hecho por Daniel Damota
 
 <p align="center">
   <img src="https://github.com/DanielDamota04/Writeups_CTF/blob/main/Dockerlabs/Pyred/Imagenes/0.png" alt="pyred"/>
