@@ -64,7 +64,7 @@ nmap -sCV -p<PUERTOS> <IP> -oN targeted
 ![nmap2](Imagenes/4.png)
 
 
-## 2. Acceso
+## 2. Explotación
 
 Según vemos en el escaneo, nos encontramos ante un servicio http, por lo cual vamos a acceder a dicho servicio a través del navegador:
 
