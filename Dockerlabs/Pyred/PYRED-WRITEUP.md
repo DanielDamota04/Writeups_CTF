@@ -107,7 +107,7 @@ Viendo que podemos conseguir la escalada por este permiso, procedemos a realizar
 
 ![Pasos_Escalada](Imagenes/11.png)
 
-En la máquina atacante creamos un archivo .rpm malicioso:
+En la máquina atacante creamos un archivo .rpm malicioso que de permiso SUID a la bash:
 
 ![Escalada1](Imagenes/12.png)
 
