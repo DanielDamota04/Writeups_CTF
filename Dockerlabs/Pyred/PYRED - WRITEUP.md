@@ -119,7 +119,7 @@ python -m http.server 80
 
 ![Escalada2](Imagenes/13.png)
 
-Desde la máquina víctima obtenemos el recurso con curl (aseguraos de estar en un directorio donde tengáis permisos de escritura):
+Desde la máquina víctima obtenemos el recurso con curl (hay que asegurarse de estar en un directorio donde tengáis permisos de escritura):
 
 ![Escalada3](Imagenes/14.png)
 
