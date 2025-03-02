@@ -1,6 +1,9 @@
 
 # Writeup - PYRED
 
+![image](https://github.com/user-attachments/assets/9fcee883-8c49-403c-9ce2-fffd2ec3b0c6)
+
+
 ## Información General
 
 - **Plataforma**: [DockerLabs](https://dockerlabs.es/)
