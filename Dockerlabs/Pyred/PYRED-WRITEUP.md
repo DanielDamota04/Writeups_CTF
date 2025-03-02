@@ -135,7 +135,7 @@ Una vez completado comprobamos los permisos de la bash y vemos que se ha aplicad
 
 ![Escalada5](Imagenes/16.png)
 
-Ahora nos mandamos una shell privilegiada y accedemos como root:
+Ahora nos enviamos una shell privilegiada y accedemos como root:
 
 ![Root](Imagenes/17.png)
 
