@@ -17,8 +17,6 @@
 
 - Abusar de un intérprete de Python en una página web para conseguir acceso no autorizado
 
-- Crear un exploit en Python para automatizar el acceso (EXTRA)
-
 - Abusar de un privilegio de **Sudoers** (Dandified Yum) con **GTFOBins** (Escalada de privilegios a root)
 
 ---
