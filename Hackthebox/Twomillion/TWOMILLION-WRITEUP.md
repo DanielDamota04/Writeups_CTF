@@ -293,7 +293,7 @@ stty rows <filas> columns <columnas>
 Si listamos los ficheros, encontramos un archivo llamado database.php:
 
 ```
-cat database.php
+cat Database.php
 ```
 
 ![Acceso](Imagenes/33.png)
