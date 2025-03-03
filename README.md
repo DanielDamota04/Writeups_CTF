@@ -13,6 +13,8 @@ Bienvenido a mi repositorio de writeups de máquinas de CTF. Aquí encontrarás 
 
 ### **Hack The Box (https://www.hackthebox.com/)**
 
+[Máquina Twomillion](Hackthebox/Twomillion/TWOMILLION-WRITEUP.md)
+
 ---
 
 ### **TryHackMe (https://tryhackme.com/)** 
