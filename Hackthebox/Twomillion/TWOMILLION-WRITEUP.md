@@ -114,7 +114,7 @@ Podemos fijarnos desde la consola del navegador si encontramos información rele
 
 ![http](Imagenes/11.png)
 
-**NOTA**: Cuando ejecutas this en la consola del navegador, generalmente hace referencia al objeto window, que es el objeto global en los navegadores. Este gestiona el entorno de ejecución y contiene diversas funcionalidades, como acceso al DOM (document), historial de navegación (history), URL actual (location), almacenamiento local (localStorage y sessionStorage), funciones del navegador (alert(), setTimeout(), fetch()), y datos sobre el sistema y el navegador (navigator), por lo tanto podemos llegar a visualizar fugas de infomación.
+**NOTA**: Cuando ejecutas this en la consola del navegador, generalmente hace referencia al objeto window, que es el objeto global en los navegadores. Este gestiona el entorno de ejecución y contiene diversas funcionalidades, como acceso al DOM (document), historial de navegación (history), URL actual (location), almacenamiento local (localStorage y sessionStorage), funciones del navegador (alert(), setTimeout(), fetch()), y datos sobre el sistema y el navegador (navigator), por lo tanto podemos llegar a visualizar infomación relevante.
 
 ## 2. Explotación
 
