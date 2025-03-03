@@ -13,7 +13,7 @@
 - **Fecha de Ejecución**: 03/03/2025
 - **Metodología**: Enumeración → Explotación → Escalada de Privilegios
 
-## Machine Matrix de la máquina
+## Machine Matrix
 
 <p align="center">
   <img src="Imagenes/1.png" alt="pyred"/>
