@@ -209,7 +209,7 @@ export TERM=xterm
 
 ![http](Imagenes/22.png)
 
-Ahora cambiamos el tamaño de filas y columnas de la stty, en una terminal de nuestra máquina atacante ponemos el siguiente comando:
+Ahora cambiamos el tamaño de filas y columnas de la tty, en una terminal de nuestra máquina atacante ponemos el siguiente comando:
 
 ```
 stty size
