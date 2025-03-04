@@ -9,6 +9,8 @@ Bienvenido a mi repositorio de writeups de máquinas de CTF. Aquí encontrarás 
 
 [Máquina Pyred](Dockerlabs/Pyred/PYRED-WRITEUP.md)
 
+[Máquina Domain](Dockerlabs/Pyred/DOMAIN-WRITEUP.md)
+
 ---
 
 ### **Hack The Box (https://www.hackthebox.com/)**
