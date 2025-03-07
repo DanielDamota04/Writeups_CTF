@@ -5,7 +5,7 @@ Bienvenido a mi repositorio de writeups de máquinas de CTF. Aquí encontrarás 
 
 ## ÍNDICE
 
-### **Dockerlabs (https://dockerlabs.es/)**
+### **Dockerlabs**
 
 [Máquina Pyred](Dockerlabs/Pyred/PYRED-WRITEUP.md)
 
@@ -13,10 +13,10 @@ Bienvenido a mi repositorio de writeups de máquinas de CTF. Aquí encontrarás 
 
 ---
 
-### **Hack The Box (https://www.hackthebox.com/)**
+### **Hack The Box**
 
 [Máquina Twomillion](Hackthebox/Twomillion/TWOMILLION-WRITEUP.md)
 
 ---
 
-### **TryHackMe (https://tryhackme.com/)** 
+### **TryHackMe** 
