@@ -17,6 +17,8 @@ Bienvenido a mi repositorio de writeups de máquinas de CTF. Aquí encontrarás 
 
 [Máquina Twomillion](Hackthebox/Twomillion/TWOMILLION-WRITEUP.md)
 
+[Máquina Cicada](Hackthebox/Cicada/CICADA-WRITEUP.md)
+
 ---
 
 ### **Vulnhub** 
