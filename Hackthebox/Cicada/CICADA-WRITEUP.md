@@ -24,7 +24,7 @@
 
 - Pruebas de penetración en Active Directory
 
-- Fuerza Bruta con Kerbrute
+- Fuerza Bruta con Kerbrute para enumerar posibles usuarios
 
 - Enumeración SMB
 
@@ -34,7 +34,7 @@
 
 - Filtración de información a través de Rpcclient (querydispinfo)
 
-- Filtración de información por recursos compartidos de SMB
+- Filtración de información por recursos compartidos de SMB (Credenciales para acceder con Evil-winrm)
 
 - Abuso de SeBackupPrivilege/SeRestorePrivilege y Pass The Hash con Evil-winrm [Escalada de privilegios]
 
