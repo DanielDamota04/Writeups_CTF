@@ -167,7 +167,7 @@ netexec smb 10.10.11.35 -u 'guest' -p '' --rid-brute > ridbrute.txt
 
 ![http](Imagenes/16.png)
 
-Si realizamos el siguiente filtro con regex, podremos ver los usuarios enumerados y reescribir el fichero (usando sponge evitamos problemas al leer y escribir a la vez el mismo fichero):
+Si realizamos el siguiente filtro con regex, podremos ver los usuarios enumerados y reescribir el fichero (usando sponge evitamos problemas al leer y escribir a la vez el mismo fichero y podemos guardar los cambios):
 
 ```
 cat ridbrute.txt | grep User| awk '{print $6}'| awk -F '\' '{print $2}' | sponge ridbrute.txt
