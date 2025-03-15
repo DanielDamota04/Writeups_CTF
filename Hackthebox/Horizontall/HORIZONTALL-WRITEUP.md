@@ -1,5 +1,3 @@
-
-
 # Writeup de la máquina Horizontall realizado por Daniel Damota
 
 <p align="center">
@@ -72,10 +70,10 @@ function extractPorts(){
 
 ![extractPorts](Imagenes/4.png)
 
-Ahora realizamos un escaneo mas exhaustivo de los puertos (debido a la alta cantidad de puertos, vamos a extraer la evidencia en formato XML mediante el parámetro -oX para visualizarlo todo de manera más cómoda a través del navegador):
+Ahora realizamos un escaneo mas exhaustivo de los puertos:
 
 ```
-nmap -sCV -p<PUERTOS> <IP> -oN targeted -oX targeted.xml
+nmap -sCV -p<PUERTOS> <IP> -oN targeted
 ```
 
 ![nmap2](Imagenes/5.png)
