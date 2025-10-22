@@ -29,7 +29,7 @@ Si quieres visualizar todas las máquinas de manera más cómoda puedes hacerlo 
 
 ### **Vulnhub** 
 
-[Máquina Symfonos1 + Symfonos2 (Pivoting Simple)](Vulnhub/Symfonos1+Pivoting/SYMFONOS1-WRITEUP.md)
+[Máquina Symfonos1 + Pivoting](Vulnhub/Symfonos1+Pivoting/SYMFONOS1-WRITEUP.md)
 
 
 
