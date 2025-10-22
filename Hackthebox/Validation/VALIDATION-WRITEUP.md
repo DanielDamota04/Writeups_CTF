@@ -28,6 +28,8 @@ Uso de proxy http para hacking web (Caido)
 
 Filtración de Información (Credenciales) [Escalada de Privilegios]
 
+Creación de exploits en Python para automatizar el acceso
+
 ---
 
 ## 1. Reconocimiento y Enumeración
@@ -328,4 +330,5 @@ if __name__ == '__main__':
 Explicación del cambio:
 
 Antes de enviarnos la shell, hacemos que el programa ejecute un su root y que introduzca la credencial, luego de ello si que nos envía la shell.
+
 
